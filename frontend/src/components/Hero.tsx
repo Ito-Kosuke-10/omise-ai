@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface HeroProps {
   onNext: () => void;
 }
@@ -38,20 +40,31 @@ export default function Hero({ onNext }: HeroProps) {
 
         {/* CTAボタン */}
         <div className="mb-16 px-4">
-          <button 
-            onClick={onNext} 
-            className="btn-primary mx-auto group relative overflow-hidden inline-flex items-center justify-center gap-2"
-          >
-            <span>はじめる</span>
-            <svg 
-              className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-2xl mx-auto">
+            {/* プライマリボタン：簡易シミュレーション */}
+            <button 
+              onClick={onNext} 
+              className="btn-primary group relative overflow-hidden inline-flex items-center justify-center gap-2 w-full md:w-auto md:max-w-md"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
+              <span>簡易シミュレーションをはじめる</span>
+              <svg 
+                className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+            
+            {/* セカンダリボタン：ログイン */}
+            <Link 
+              href="/login"
+              className="btn-secondary inline-flex items-center justify-center gap-2 w-full md:w-auto md:max-w-md"
+            >
+              <span>ログイン</span>
+            </Link>
+          </div>
         </div>
 
         {/* 特徴アイコン - より明確な配置 */}

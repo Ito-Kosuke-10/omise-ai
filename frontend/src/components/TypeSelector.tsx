@@ -13,6 +13,96 @@ interface Category {
   subcategories: string[];
 }
 
+// サブカテゴリ名から適切なアイコンを取得する関数
+function getSubCategoryIcon(subCategoryName: string): string {
+  const iconMap: Record<string, string> = {
+    // 和食系
+    '寿司': '🍣',
+    'うどん・そば': '🍜',
+    '天ぷら': '🍤',
+    '焼き鳥': '🍢',
+    '居酒屋': '🍶',
+    '定食・丼': '🍱',
+    '懐石・会席': '🍽️',
+    'その他和食': '🍱',
+    
+    // 洋食系
+    'イタリアン': '🍝',
+    'フレンチ': '🍷',
+    'ステーキハウス': '🥩',
+    'ハンバーガー': '🍔',
+    'パスタ専門店': '🍝',
+    'ピザ': '🍕',
+    'その他洋食': '🍽️',
+    
+    // 中華系
+    '四川料理': '🌶️',
+    '広東料理': '🥟',
+    '北京料理': '🦆',
+    '上海料理': '🥢',
+    '餃子専門店': '🥟',
+    'その他中華': '🥟',
+    
+    // アジア・エスニック系
+    'タイ料理': '🍛',
+    'ベトナム料理': '🍜',
+    '韓国料理': '🥘',
+    'インド料理': '🍛',
+    'シンガポール料理': '🍜',
+    'その他アジア': '🌶️',
+    
+    // カフェ・スイーツ系
+    'コーヒー専門店': '☕',
+    'スイーツ・ケーキ': '🍰',
+    'パンケーキ': '🥞',
+    'アイスクリーム': '🍦',
+    '和スイーツ': '🍡',
+    'その他カフェ': '☕',
+    
+    // バー・酒場系
+    'ビアバー': '🍺',
+    'ワインバー': '🍷',
+    'カクテルバー': '🍸',
+    '日本酒バー': '🍶',
+    '立ち飲み': '🍻',
+    'その他酒場': '🍺',
+    
+    // ラーメン・麺系
+    'ラーメン': '🍜',
+    'つけ麺': '🍜',
+    '油そば': '🍜',
+    '担々麺': '🍜',
+    'その他麺類': '🍜',
+    
+    // 焼肉・焼き鳥・肉系
+    '焼肉': '🥩',
+    '焼き鳥': '🍢',
+    'ホルモン': '🥓',
+    'ステーキ': '🥩',
+    'ハンバーグ': '🍔',
+    'その他肉料理': '🥩',
+    
+    // ファストフード・軽食系
+    'フライドチキン': '🍗',
+    'サンドイッチ': '🥪',
+    'お好み焼き・たこ焼き': '🍡',
+    'その他軽食': '🍔',
+    
+    // ベーカリー・惣菜系
+    'パン屋': '🥖',
+    '惣菜パン': '🥐',
+    'サンドイッチ専門': '🥪',
+    'デリカテッセン': '🥗',
+    'その他': '🍴',
+    
+    // キッチンカー系
+    'タコス': '🌮',
+    'その他': '🚐',
+  };
+  
+  return iconMap[subCategoryName] || '🍴'; // デフォルトアイコン
+}
+
 export default function TypeSelector({ onSelect }: TypeSelectorProps) {
   const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
@@ -56,7 +146,14 @@ export default function TypeSelector({ onSelect }: TypeSelectorProps) {
           </h2>
           <p className="text-gray-600 text-sm sm:text-base">
             {selectedMainCategory 
-              ? '詳細な業態を選択してください' 
+              ? (
+                <>
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold mr-2 mb-2 sm:mb-0">
+                    サブカテゴリ
+                  </span>
+                  <span>詳細な業態を選択してください</span>
+                </>
+              )
               : 'メインカテゴリを選択してください'}
           </p>
         </div>
@@ -103,32 +200,57 @@ export default function TypeSelector({ onSelect }: TypeSelectorProps) {
             </div>
 
             {/* サブカテゴリグリッド */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {selectedCategory?.subcategories.map((subCategory) => (
                 <button
                   key={subCategory}
                   onClick={() => handleSubCategorySelect(subCategory)}
-                  className={`group relative bg-white/90 backdrop-blur-sm rounded-xl p-4 sm:p-5 border-2 transition-all duration-300 hover:scale-105 ${
+                  className={`group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 border-2 transition-all duration-300 hover:scale-105 flex flex-col items-center text-center ${
                     selectedSubCategory === subCategory
                       ? 'border-blue-500 bg-blue-50 shadow-lg'
                       : 'border-blue-100 hover:border-blue-400 hover:shadow-md'
                   }`}
                 >
-                  <span className={`text-sm sm:text-base font-semibold ${
+                  {/* アイコン */}
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 ${
+                    selectedSubCategory === subCategory
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg'
+                      : 'bg-gradient-to-br from-blue-100 to-blue-200'
+                  }`}>
+                    <span className="text-3xl sm:text-4xl">
+                      {getSubCategoryIcon(subCategory)}
+                    </span>
+                  </div>
+                  
+                  {/* タイトル */}
+                  <h3 className={`text-base sm:text-lg font-bold mb-2 ${
                     selectedSubCategory === subCategory
                       ? 'text-blue-700'
                       : 'text-gray-800'
                   }`}>
                     {subCategory}
-                  </span>
+                  </h3>
+                  
+                  {/* 説明文 */}
+                  <p className={`text-xs sm:text-sm leading-relaxed ${
+                    selectedSubCategory === subCategory
+                      ? 'text-blue-600'
+                      : 'text-gray-600'
+                  }`}>
+                    {subCategory}のビジネスプランを作成
+                  </p>
+                  
+                  {/* 選択時のチェックマーク */}
                   {selectedSubCategory === subCategory && (
-                    <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  {/* ホバーエフェクト */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
               ))}
             </div>

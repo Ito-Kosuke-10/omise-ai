@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { BusinessPlanOutput } from '@/lib/api';
 
 interface ResultDisplayProps {
@@ -15,10 +16,12 @@ export default function ResultDisplay({ data, onRestart }: ResultDisplayProps) {
   const tabs: { id: TabType; label: string; icon: string }[] = [
     { id: 'concept', label: 'コンセプト', icon: '💡' },
     { id: 'kpi', label: '基本KPI', icon: '📊' },
-    { id: 'menu', label: 'メニュー例', icon: '🍴' },
+    { id: 'menu', label: 'メニュー例', icon: '🍽' },
     { id: 'strategy', label: '集客・オペ', icon: '🚀' },
     { id: 'financial', label: '収支・投資', icon: '💰' },
   ];
+
+  const activeTabLabel = tabs.find(tab => tab.id === activeTab)?.label || '';
 
   return (
     <div className="relative min-h-screen py-8 sm:py-12 px-4 sm:px-6 overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -42,23 +45,48 @@ export default function ResultDisplay({ data, onRestart }: ResultDisplayProps) {
         </div>
 
         {/* タブナビゲーション */}
-        <div className="mb-6 overflow-x-auto">
-          <div className="flex gap-2 sm:gap-3 min-w-max pb-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-semibold text-sm sm:text-base whitespace-nowrap transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg scale-105'
-                    : 'bg-white/90 backdrop-blur-sm text-gray-700 border-2 border-blue-100 hover:border-blue-300 hover:bg-blue-50'
-                }`}
-              >
-                <span className="text-lg sm:text-xl">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+        <div className="mb-8">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 px-4 sm:px-6">
+            <div className="flex gap-3 sm:gap-4 min-w-max pb-3">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`group relative flex flex-col items-center justify-center gap-2 px-6 sm:px-8 py-4 sm:py-5 rounded-2xl font-bold text-sm sm:text-base whitespace-nowrap transition-all duration-300 min-w-[120px] sm:min-w-[140px] ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-xl scale-105 transform'
+                      : 'bg-white/95 backdrop-blur-sm text-gray-700 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
+                  }`}
+                >
+                  <span className={`text-2xl sm:text-3xl transition-transform duration-300 ${
+                    activeTab === tab.id ? 'scale-110' : 'group-hover:scale-110'
+                  }`}>
+                    {tab.icon}
+                  </span>
+                  <span className={`font-bold ${
+                    activeTab === tab.id ? 'text-white' : 'text-gray-700'
+                  }`}>
+                    {tab.label}
+                  </span>
+                  {activeTab === tab.id && (
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-500 rounded-full"></div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* アクティブタブの見出し */}
+        <div className="mb-6">
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-800 flex items-center gap-3">
+            <span className="text-3xl sm:text-4xl">
+              {tabs.find(tab => tab.id === activeTab)?.icon}
+            </span>
+            <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">
+              {activeTabLabel}
+            </span>
+          </h3>
         </div>
 
         {/* タブコンテンツ */}
@@ -326,9 +354,12 @@ export default function ResultDisplay({ data, onRestart }: ResultDisplayProps) {
               より詳細な分析や複数プランの比較、保存機能をご利用いただくには<br className="hidden sm:block" />
               ユーザー登録が必要です（無料）
             </p>
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <Link 
+              href="/signup"
+              className="inline-block bg-white text-blue-600 px-8 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
               ユーザー登録（無料）
-            </button>
+            </Link>
             <p className="text-xs sm:text-sm mt-4 opacity-75">
               ※ 登録なしでも現在の結果は閲覧できます
             </p>

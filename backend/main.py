@@ -1,10 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import timedelta
 import models, schemas, crud
 from database import engine, get_db
 from config import settings
+from auth.jwt import create_access_token
+from auth.dependencies import get_current_user
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -159,6 +162,105 @@ def get_subsidies(area: str):
     
     subsidies.append(local)
     return {"subsidies": subsidies}
+
+
+# 認証関連のエンドポイント
+@app.post("/api/auth/register", response_model=schemas.TokenResponse)
+def register(user_data: schemas.UserRegister, db: Session = Depends(get_db)):
+    """ユーザー登録"""
+    try:
+        # ユーザーを作成
+        db_user = crud.create_user(db, user_data)
+        
+        # JWTトークンを発行
+        access_token = create_access_token(
+            data={"sub": str(db_user.id), "email": db_user.email},
+            expires_delta=timedelta(seconds=settings.jwt_expires_in)
+        )
+        
+        # レスポンスを返す
+        return schemas.TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            user=schemas.UserResponse(
+                id=db_user.id,
+                email=db_user.email,
+                created_at=db_user.created_at
+            )
+        )
+    except ValueError as e:
+        # ValueErrorはバリデーションエラーとして400で返す
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        # HTTPExceptionはそのまま再発生
+        raise
+    except Exception as e:
+        # その他の予期しないエラーは500で返す（ライブラリの生エラーを隠す）
+        error_msg = str(e)
+        # bcrypt関連のエラーメッセージをチェック
+        if "72 bytes" in error_msg.lower() or "too long" in error_msg.lower():
+            raise HTTPException(
+                status_code=400,
+                detail="パスワードは72バイト以内で入力してください。（英数字のみの場合は72文字以内、日本語などのマルチバイト文字を含む場合は文字数が少なくなります）"
+            )
+        # その他のエラーは汎用的なメッセージに変換
+        import traceback
+        print(f"Unexpected error in register: {error_msg}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="ユーザー登録中にエラーが発生しました。しばらく待ってから再度お試しください。")
+
+
+@app.post("/api/auth/login", response_model=schemas.TokenResponse)
+def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    """ユーザーログイン"""
+    # ユーザー認証
+    user = crud.authenticate_user(db, user_data.email, user_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="メールアドレスまたはパスワードが正しくありません",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # JWTトークンを発行
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email},
+        expires_delta=timedelta(seconds=settings.jwt_expires_in)
+    )
+    
+    # レスポンスを返す
+    return schemas.TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=schemas.UserResponse(
+            id=user.id,
+            email=user.email,
+            created_at=user.created_at
+        )
+    )
+
+
+@app.get("/api/auth/me", response_model=schemas.UserResponse)
+def get_current_user_info(current_user = Depends(get_current_user)):
+    """現在のユーザー情報を取得"""
+    return schemas.UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        created_at=current_user.created_at
+    )
+
+
+@app.get("/api/plans/my", response_model=List[schemas.BusinessPlanOutput])
+def get_my_plans(
+    skip: int = 0,
+    limit: int = 10,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """ログインユーザーのシミュレーション結果一覧を取得（下準備）"""
+    # 現在は全ユーザーのプランを返すが、将来的にuser_idでフィルタリングする
+    # current_user.id を使ってフィルタリングできるように準備
+    return crud.get_business_plans(db, skip, limit)
 
 if __name__ == "__main__":
     import uvicorn

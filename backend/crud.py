@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 import models, schemas
+from auth.password import hash_password, verify_password
 
 def extract_main_category(type: str) -> str:
     """「和食 - 寿司」のような形式からメインカテゴリを抽出"""
@@ -343,6 +345,52 @@ def get_business_plan(db: Session, plan_id: int):
 
 def get_business_plans(db: Session, skip: int = 0, limit: int = 10):
     return db.query(models.BusinessPlan).order_by(models.BusinessPlan.created_at.desc()).offset(skip).limit(limit).all()
+
+
+# ユーザー関連のCRUD関数
+def get_user_by_email(db: Session, email: str):
+    """メールアドレスでユーザーを取得"""
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
+def create_user(db: Session, user: schemas.UserRegister):
+    """新規ユーザーを作成"""
+    # メールアドレスの重複チェック
+    existing_user = get_user_by_email(db, user.email)
+    if existing_user:
+        raise ValueError("このメールアドレスは既に登録されています")
+    
+    # パスワードをハッシュ化
+    hashed_password = hash_password(user.password)
+    
+    # ユーザーを作成
+    db_user = models.User(
+        email=user.email,
+        password_hash=hashed_password
+    )
+    db.add(db_user)
+    try:
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("このメールアドレスは既に登録されています")
+
+
+def authenticate_user(db: Session, email: str, password: str):
+    """ユーザー認証"""
+    user = get_user_by_email(db, email)
+    if not user:
+        return None
+    if not verify_password(password, user.password_hash):
+        return None
+    return user
+
+
+def get_user_by_id(db: Session, user_id: int):
+    """IDでユーザーを取得"""
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
 def get_menu_suggestions(type: str, concept: str):
     data = {
